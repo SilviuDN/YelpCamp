@@ -26,7 +26,9 @@ const seedDB = async () => {
             location: `${cities[random1000].city}, ${cities[random1000].state}`,
             // title: `${descriptors[random18]} ${places[random18]}`,
             title: `${ sample(descriptors) } ${ sample( places )}`,
-            price: Math.floor( Math.random() * 50)
+            image: 'https://source.unsplash.com/collection/483251',
+            price: Math.floor( Math.random() * 40 + 10),
+            description:'    Lorem ipsum dolor, sit amet consectetur adipisicing elit. Culpa fugiat ipsum rerum laborum corrupti consectetur in sunt odit laboriosam sint, tempora sapiente quod autem iusto odio non! Rerum, obcaecati quidem.'
         });
         await camp.save();
     }
