@@ -3,24 +3,16 @@ const router = express.Router({mergeParams: true}); //altfel nu aveam acces la p
                                                     // nu puteam accesa campgroundId din "/campgrounds/:id/reviews"
                                                     // vezi app.js
 const {reviewSchema} = require('../schemas'); //this is not the mongo schema, it's the Joi schema
-
-
-const ExpressError = require('../utils/ExpressError');
-const catchAsync = require('../utils/catchAsync');
+const {validateReview} = require('../middleware');
 
 const Campground = require('../models/campground');
 const Review = require('../models/review');
 
-const validateReview = (req, res, next) => {
-    const result = reviewSchema.validate( req.body );
-    const {error} = result;
-    if(error){
-        const msg = error.details.map(el => el.message).join(', ');
-        throw new ExpressError(msg, 400);
-    }else{
-        next();
-    }
-}
+const ExpressError = require('../utils/ExpressError');
+const catchAsync = require('../utils/catchAsync');
+
+
+
 
 router.post( '/', validateReview, catchAsync( async( req, res ) => {
     

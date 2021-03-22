@@ -2,23 +2,12 @@ const express = require('express');
 const router = express.Router();
 const catchAsync = require('../utils/catchAsync');
 const {campgroundSchema} = require('../schemas'); 
-const {isLoggedIn} = require('../middleware');
+const {isLoggedIn, validateCampground, isAuthor, validateReview} = require('../middleware');
 
 const ExpressError = require('../utils/ExpressError');
 const Campground = require('../models/campground');
 
-const validateCampground = (req, res, next) => {
 
-    const result = campgroundSchema.validate( req.body );
-    const {error} = result;
-    // console.log(result.error);
-    if(error){
-        const msg = error.details.map(el => el.message).join(', ');
-        throw new ExpressError(msg, 400);        
-    }else{
-        next();
-    }
-}
 
 router.get('/', catchAsync( async (req, res) => {
     const campgrounds = await Campground.find({});
@@ -43,7 +32,7 @@ router.get('/new', isLoggedIn, (req, res) => {
 router.get('/:id', catchAsync( async (req, res) => {
     const {id} = req.params;
     const campground = await Campground.findById(id).populate('reviews').populate('author');
-    console.log(campground);
+    // console.log(campground);
     if(!campground){
         req.flash('error', 'Cannot find this campground.');
         return res.redirect('/campgrounds');
@@ -52,7 +41,7 @@ router.get('/:id', catchAsync( async (req, res) => {
     // res.render('campgrounds/show', {campground, msg: req.flash('success')} ); // we set up a middleware
 }));
 
-router.get('/:id/edit', isLoggedIn, catchAsync( async (req, res) => {
+router.get('/:id/edit', isLoggedIn, isAuthor, catchAsync( async (req, res) => {
     const {id} = req.params;
     const campground = await Campground.findById(id).populate('reviews');
     // console.log(campground);
@@ -63,19 +52,24 @@ router.get('/:id/edit', isLoggedIn, catchAsync( async (req, res) => {
     res.render('campgrounds/edit', {campground});
 }));
 
-router.put('/:id', isLoggedIn, validateCampground, catchAsync( async (req, res, next) => {
+router.put('/:id', isLoggedIn, isAuthor, validateCampground, catchAsync( async (req, res, next) => {
             // res.send(req.body);
     const {id} = req.params;
-    const campground = await Campground.findByIdAndUpdate(id, req.body.campground);
+    // const campground = await Campground.findById(id);
+    // if(!campground.author.equals(req.user._id)){
+    //     req.flash('error', 'Yo do not have permission to do this.');
+    //     return res.redirect(`/campgrounds/${id}`);
+    // }
+    const campground2 = await Campground.findByIdAndUpdate(id, req.body.campground);
     // const campground = await Campground.findByIdAndUpdate(id, {...req.body.campground});
     //Asa nu merge:
     // res.redirect(`campgrounds/${campground._id}`);
     //A trebuit sa pun un slash nenecesar in ruta pentru New!!!
     req.flash('success', 'Succesfully edited campground.')
-    res.redirect(`/campgrounds/${campground._id}`);
+    res.redirect(`/campgrounds/${campground2._id}`);
 }));
 
-router.delete('/:id', isLoggedIn, catchAsync( async (req, res) => {
+router.delete('/:id', isAuthor, isLoggedIn, catchAsync( async (req, res) => {
     const {id} = req.params;
     const campground = await Campground.findByIdAndDelete(id);
     req.flash('success', 'Succesfully deleted campground.')
