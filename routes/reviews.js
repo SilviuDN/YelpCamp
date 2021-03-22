@@ -3,7 +3,7 @@ const router = express.Router({mergeParams: true}); //altfel nu aveam acces la p
                                                     // nu puteam accesa campgroundId din "/campgrounds/:id/reviews"
                                                     // vezi app.js
 const {reviewSchema} = require('../schemas'); //this is not the mongo schema, it's the Joi schema
-const {validateReview} = require('../middleware');
+const {validateReview, isLoggedIn, isReviewAuthor} = require('../middleware');
 
 const Campground = require('../models/campground');
 const Review = require('../models/review');
@@ -14,10 +14,11 @@ const catchAsync = require('../utils/catchAsync');
 
 
 
-router.post( '/', validateReview, catchAsync( async( req, res ) => {
+router.post( '/', isLoggedIn, validateReview, catchAsync( async( req, res ) => {
     
     const campground = await Campground.findById( req.params.id);
     const review = new Review( req.body.review );
+    review.author = req.user._id;
     campground.reviews.push(review);
     await review.save();
     await campground.save();
@@ -26,7 +27,7 @@ router.post( '/', validateReview, catchAsync( async( req, res ) => {
     
 }))
 
-router.delete( '/:reviewId', catchAsync(async (req, res) => {
+router.delete( '/:reviewId', isLoggedIn, isReviewAuthor, catchAsync(async (req, res) => {
     const {id, reviewId} = req.params;
     await Campground.findByIdAndUpdate(id, {$pull: {reviews: reviewId}});
     await Review.findByIdAndDelete(reviewId);
